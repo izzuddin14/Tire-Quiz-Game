@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MES Mission — Factory Training Game</title>
+<style>
+  :root{
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --blue-light:#dbeafe;
+    --orange:#f97316;
+    --orange-light:#ffedd5;
+    --ink:#1e293b;
+    --muted:#64748b;
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --good:#16a34a;
+    --good-light:#dcfce7;
+    --bad:#dc2626;
+    --bad-light:#fee2e2;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    background:linear-gradient(180deg,#eef4fb 0%,var(--bg) 100%);
+    color:var(--ink);
+    min-height:100vh;
+    padding:24px 16px 48px;
+  }
+  .wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:20px;}
+
+  header{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px 24px;
+    box-shadow:0 2px 8px rgba(37,99,235,.08);
+    border-top:5px solid var(--orange);
+    display:flex;align-items:center;gap:14px;
+  }
+  .logo{
+    width:48px;height:48px;border-radius:12px;
+    background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;flex-shrink:0;
+  }
+  header h1{font-size:22px;letter-spacing:.5px;}
+  header p{color:var(--muted);font-size:13px;margin-top:2px;}
+
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    box-shadow:0 2px 8px rgba(30,41,59,.06);
+  }
+  .card h2{
+    font-size:15px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--blue);margin-bottom:14px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .badge{
+    background:var(--orange-light);color:var(--orange);
+    font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;
+    text-transform:none;letter-spacing:0;
+  }
+
+  .mission-tag{
+    display:inline-block;background:var(--blue-light);color:var(--blue-dark);
+    font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  #mission-title{font-size:20px;margin-bottom:6px;}
+  #mission-desc{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:18px;}
+  .answers{display:grid;gap:10px;}
+  .answer{
+    text-align:left;width:100%;
+    background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;
+    padding:12px 16px;font-size:14px;color:var(--ink);
+    cursor:pointer;transition:all .15s ease;font-family:inherit;
+  }
+  .answer:hover:not(:disabled){border-color:var(--blue);background:var(--blue-light);transform:translateX(3px);}
+  .answer:disabled{cursor:default;opacity:.9;}
+  .answer.correct{border-color:var(--good);background:var(--good-light);font-weight:600;}
+  .answer.wrong{border-color:var(--bad);background:var(--bad-light);}
+  #feedback{margin-top:16px;border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;display:none;}
+  #feedback.show{display:block;animation:pop .2s ease;}
+  #feedback.good{background:var(--good-light);color:#14532d;border-left:4px solid var(--good);}
+  #feedback.bad{background:var(--bad-light);color:#7f1d1d;border-left:4px solid var(--bad);}
+  @keyframes pop{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+  #btn-next{
+    margin-top:16px;display:none;width:100%;
+    background:var(--blue);color:#fff;border:none;border-radius:12px;
+    padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  #btn-next:hover{background:var(--blue-dark);}
+  #btn-next.show{display:block;}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat{background:#f8fafc;border-radius:12px;padding:12px;text-align:center;border:1px solid #e2e8f0;}
+  .stat .num{font-size:22px;font-weight:800;color:var(--blue);}
+  .stat .num.orange{color:var(--orange);}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+  #stars{font-size:22px;letter-spacing:3px;text-align:center;margin-bottom:14px;color:#e2e8f0;}
+  #stars .on{color:var(--orange);}
+  #stars small{color:var(--muted);letter-spacing:0;font-size:12px;}
+  .bar-outer{background:#e2e8f0;border-radius:999px;height:12px;overflow:hidden;margin-bottom:16px;}
+  #bar{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--orange));border-radius:999px;transition:width .4s ease;}
+  .mission-list{display:grid;gap:8px;}
+  .mission-item{
+    display:flex;align-items:center;gap:10px;
+    background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+    padding:10px 14px;font-size:13px;
+  }
+  .mission-item .ms-icon{font-size:16px;}
+  .mission-item .ms-stars{margin-left:auto;font-size:14px;color:#e2e8f0;letter-spacing:2px;}
+  .mission-item .ms-stars .on{color:var(--orange);}
+  .mission-item.done{background:var(--good-light);border-color:#bbf7d0;}
+  .mission-item.active{border-color:var(--blue);background:var(--blue-light);font-weight:600;}
+
+  .result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}
+  .result-grid .stat .num{font-size:26px;}
+  #result-msg{
+    background:var(--orange-light);color:#7c2d12;border-left:4px solid var(--orange);
+    border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.6;margin-bottom:16px;
+  }
+  #btn-replay{
+    width:100%;background:var(--orange);color:#fff;border:none;border-radius:12px;
+    padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  #btn-replay:hover{background:#ea580c;}
+
+  footer{text-align:center;color:var(--muted);font-size:12px;}
+
+  @media(max-width:560px){
+    .stats,.result-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ================= 2D GAME SKIN ================= */
+  body{
+    font-family:"Comic Sans MS","Segoe UI",system-ui,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 400px at 50% 0%, #fff7e0 0%, transparent 60%),
+      linear-gradient(180deg,#8fd0ff 0%,#bfe4ff 35%,#e6f4ff 65%,#d8f0e2 100%);
+    background-attachment:fixed;
+    padding:0 16px 56px;
+    overflow-x:hidden;
+  }
+  /* cartoon factory skyline fixed behind the page */
+  .skyline{
+    position:fixed;left:0;right:0;bottom:0;height:170px;z-index:0;pointer-events:none;
+  }
+  .skyline .layer{position:absolute;bottom:0;width:100%;height:100%;}
+  .skyline .far{
+    background:
+      linear-gradient(#a9d7f5,#a9d7f5) 0 100%/100% 60px no-repeat;
+    opacity:.55;
+  }
+  .skyline .near{filter:none;}
+  .cloud{
+    position:fixed;background:#fff;border-radius:999px;opacity:.9;z-index:0;pointer-events:none;
+    box-shadow:20px -8px 0 6px #fff, -24px -4px 0 2px #fff;
+    animation:drift 46s linear infinite;
+  }
+  .cloud.c1{width:90px;height:26px;top:8%;left:-140px;animation-duration:52s;}
+  .cloud.c2{width:70px;height:20px;top:20%;left:-180px;animation-duration:70s;animation-delay:6s;transform:scale(.8);}
+  @keyframes drift{from{transform:translateX(0);}to{transform:translateX(120vw);}}
+
+  .wrap{position:relative;z-index:1;}
+
+  header{
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    border:4px solid #17337f;border-radius:0 0 26px 26px;
+    box-shadow:0 8px 0 rgba(23,51,127,.35);
+    margin:0 -16px 20px;padding:20px 24px 24px;
+  }
+  header h1{
+    font-size:30px;letter-spacing:2px;color:#fff;
+    text-shadow:2px 2px 0 #f97316, 4px 4px 0 rgba(0,0,0,.3);
+  }
+  header p{color:#dbeafe;font-size:13px;}
+
+  .card{
+    background:#fffdf5;
+    border:4px solid #17337f;border-radius:22px;
+    box-shadow:0 8px 0 rgba(23,51,127,.28);
+    position:relative;
+  }
+  .card h2{color:#17337f;font-size:16px;}
+  .badge{
+    background:#f97316;color:#fff;border:2px solid #c2410c;
+    font-size:12px;padding:3px 12px;border-radius:999px;box-shadow:0 3px 0 #c2410c;
+  }
+
+  .mission-tag{
+    background:#dbeafe;border:2px solid #2563eb;color:#1d4ed8;
+    box-shadow:0 3px 0 #93c5fd;
+  }
+  #mission-title{color:#17337f;font-size:22px;}
+  #mission-desc{font-size:15px;}
+
+  /* mascot */
+  #mascot{
+    position:absolute;top:-34px;right:18px;font-size:44px;
+    filter:drop-shadow(0 4px 0 rgba(23,51,127,.3));
+    animation:bob 1.6s ease-in-out infinite;transition:transform .2s;
+    z-index:2;
+  }
+  #mascot.happy{animation:cheer .5s ease 2;}
+  #mascot.sad{animation:shake .4s ease;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+  @keyframes cheer{0%,100%{transform:scale(1) rotate(0);}25%{transform:scale(1.25) rotate(-8deg);}75%{transform:scale(1.2) rotate(8deg);}}
+
+  /* sound toggle button */
+  #btn-sound{
+    position:fixed;top:12px;right:12px;z-index:100;
+    width:46px;height:46px;border-radius:50%;font-size:20px;cursor:pointer;
+    background:#fff;border:3px solid #17337f;box-shadow:0 4px 0 #17337f;
+    transition:transform .15s;
+  }
+  #btn-sound:hover{transform:scale(1.1);}
+  #btn-sound:active{transform:translateY(3px);box-shadow:0 1px 0 #17337f;}
+
+  /* combo streak badge */
+  #combo{
+    position:fixed;top:16px;left:16px;z-index:100;
+    background:linear-gradient(180deg,#facc15,#f97316);
+    color:#fff;font-weight:900;font-size:16px;
+    border:3px solid #c2410c;border-radius:999px;
+    padding:8px 18px;box-shadow:0 4px 0 #c2410c;
+    display:none;text-shadow:1px 1px 0 rgba(0,0,0,.25);
+  }
+  #combo.show{display:block;animation:comboPop .3s cubic-bezier(.22,1.6,.36,1);}
+  @keyframes comboPop{from{transform:scale(0) rotate(-20deg);}to{transform:scale(1) rotate(0);}}
+
+  /* sparkle on hover over answer buttons */
+  .sparkle{
+    position:fixed;z-index:55;pointer-events:none;font-size:14px;
+    animation:sparkUp .6s ease-out forwards;
+  }
+  @keyframes sparkUp{
+    from{opacity:1;transform:translateY(0) scale(1);}
+    to{opacity:0;transform:translateY(-28px) scale(.4) rotate(40deg);}
+  }
+
+  .answer{
+    font-family:inherit;font-size:15px;font-weight:700;
+    background:#fff;border:3px solid #17337f;border-radius:16px;
+    padding:14px 16px;box-shadow:0 5px 0 #17337f;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .answer::before{
+    content:attr(data-key);display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;margin-right:10px;border-radius:10px;flex-shrink:0;
+    background:#f97316;color:#fff;border:2px solid #c2410c;
+    box-shadow:0 2px 0 #c2410c;font-size:14px;
+    transform:translateY(2px);
+  }
+  .answer:hover:not(:disabled){
+    transform:translateY(-2px);box-shadow:0 7px 0 #17337f;
+    background:#fff7e0;border-color:#f97316;
+  }
+  .answer:hover:not(:disabled)::before{background:#22c55e;border-color:#15803d;box-shadow:0 2px 0 #15803d;}
+  .answer:disabled{box-shadow:0 5px 0 #17337f;}
+  .answer.correct{
+    border-color:#15803d;background:#dcfce7;
+    box-shadow:0 5px 0 #15803d;animation:pop .25s ease;
+  }
+  .answer.correct::before{background:#22c55e;border-color:#15803d;box-shadow:0 2px 0 #15803d;}
+  .answer.wrong{
+    border-color:#b91c1c;background:#fee2e2;
+    box-shadow:0 5px 0 #b91c1c;animation:shake .4s ease;
+  }
+  .answer.wrong::before{background:#ef4444;border-color:#b91c1c;box-shadow:0 2px 0 #b91c1c;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}20%{transform:translateX(-7px);}
+    40%{transform:translateX(7px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}
+  }
+
+  #feedback{
+    font-family:inherit;font-size:15px;border-radius:16px;
+    border:3px solid transparent;box-shadow:0 4px 0 rgba(23,51,127,.2);
+  }
+  #feedback.good{border-color:#15803d;box-shadow:0 4px 0 #15803d;}
+  #feedback.bad{border-color:#b91c1c;box-shadow:0 4px 0 #b91c1c;}
+
+  #btn-next{
+    font-family:inherit;font-size:16px;letter-spacing:.5px;
+    background:linear-gradient(180deg,#fb923c,#f97316);
+    border:3px solid #c2410c;border-radius:16px;
+    box-shadow:0 6px 0 #c2410c;
+  }
+  #btn-next:hover{background:linear-gradient(180deg,#fdba74,#fb923c);transform:translateY(-2px);box-shadow:0 8px 0 #c2410c;}
+  #btn-next:active{transform:translateY(3px);box-shadow:0 2px 0 #c2410c;}
+
+  .stat{
+    background:#fff;border:3px solid #17337f;border-radius:14px;
+    box-shadow:0 4px 0 rgba(23,51,127,.25);
+  }
+  .stat .num{font-size:24px;}
+  #p-score.bump{animation:bump .4s ease;}
+  @keyframes bump{0%{transform:scale(1);}40%{transform:scale(1.5);color:#f97316;}100%{transform:scale(1);}}
+
+  #bar-outer-id{}
+  .bar-outer{border:3px solid #17337f;height:16px;background:#fff;}
+  #bar{background:linear-gradient(90deg,#22c55e,#f97316);}
+
+  .mission-item{
+    background:#fff;border:3px solid #dbeafe;border-radius:14px;
+    font-size:14px;padding:12px 14px;box-shadow:0 4px 0 rgba(23,51,127,.12);
+  }
+  .mission-item .ms-stars{font-size:16px;}
+  .mission-item.done{border-color:#15803d;background:#dcfce7;box-shadow:0 4px 0 #15803d;}
+  .mission-item.active{
+    border-color:#f97316;background:#fff7e0;box-shadow:0 4px 0 #f97316;
+  }
+
+  #result-msg{border:3px solid #f97316;box-shadow:0 4px 0 #f97316;background:#fff7e0;font-size:15px;}
+
+  #btn-replay{
+    font-family:inherit;font-size:16px;
+    background:linear-gradient(180deg,#3b82f6,#1d4ed8);
+    border:3px solid #17337f;border-radius:16px;box-shadow:0 6px 0 #17337f;
+  }
+  #btn-replay:hover{transform:translateY(-2px);box-shadow:0 8px 0 #17337f;}
+  #btn-replay:active{transform:translateY(3px);box-shadow:0 2px 0 #17337f;}
+
+  /* floating score popup */
+  .float-pts{
+    position:fixed;font-size:26px;font-weight:900;color:#22c55e;z-index:50;
+    text-shadow:2px 2px 0 #fff, 0 0 10px #bbf7d0;pointer-events:none;
+    animation:floatUp 1s ease forwards;
+  }
+  @keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1);}to{opacity:0;transform:translateY(-90px) scale(1.4);}}
+
+  /* confetti pieces */
+  .confetti{
+    position:fixed;width:12px;height:12px;z-index:49;pointer-events:none;
+    animation:fall 1.4s ease-in forwards;
+  }
+  @keyframes fall{
+    from{opacity:1;transform:translateY(0) rotate(0) scale(1);}
+    to{opacity:0;transform:translateY(260px) rotate(540deg) scale(.6);}
+  }
+
+  /* ================= 3D ANIMATIONS ================= */
+  .scene{perspective:1200px;}
+  .card{
+    transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s;
+    will-change:transform;
+  }
+  .card.flip-in{animation:cardIn .6s cubic-bezier(.22,1.4,.36,1);}
+  @keyframes cardIn{
+    from{opacity:0;transform:perspective(1200px) rotateX(-35deg) translateZ(-80px);}
+    to{opacity:1;transform:perspective(1200px) rotateX(0) translateZ(0);}
+  }
+
+  /* answer buttons tilt in 3D toward the cursor */
+  .answers{perspective:900px;}
+  .answer{
+    transform-style:preserve-3d;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s;
+  }
+  .answer:active:not(:disabled){transform:translateZ(-6px);box-shadow:0 2px 0 #17337f;}
+
+  /* 3D flipping coin that arcs to the score on correct answers */
+  #coin3d{
+    position:fixed;width:44px;height:44px;z-index:60;pointer-events:none;
+    left:50vw;top:40vh;display:none;
+    transform-style:preserve-3d;
+  }
+  #coin3d .face{
+    position:absolute;inset:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:900;color:#92400e;
+    backface-visibility:hidden;
+    border:3px solid #ca8a04;
+  }
+  #coin3d .front{background:radial-gradient(circle at 35% 35%,#fef08a,#facc15);}
+  #coin3d .back{background:radial-gradient(circle at 35% 35%,#fdba74,#f97316);transform:rotateY(180deg);}
+  @keyframes coinFlip{
+    0%{display:block;opacity:1;transform:translate(0,0) rotateY(0) scale(1);}
+    100%{opacity:0;transform:translate(var(--cx),var(--cy)) rotateY(1080deg) scale(.4);}
+  }
+  #coin3d.fly{animation:coinFlip 1s cubic-bezier(.4,0,.6,1) forwards;}
+
+  /* spinning 3D gears decoration */
+  .gear3d{
+    position:fixed;font-size:34px;z-index:0;pointer-events:none;opacity:.45;
+    animation:spinGear 9s linear infinite;
+  }
+  .gear3d.g1{bottom:180px;left:12px;}
+  .gear3d.g2{bottom:210px;right:16px;font-size:26px;animation-duration:7s;animation-direction:reverse;}
+  @keyframes spinGear{
+    from{transform:perspective(600px) rotateZ(0deg) rotateX(18deg);}
+    to{transform:perspective(600px) rotateZ(360deg) rotateX(18deg);}
+  }
+
+  /* result stats pop out in 3D one by one */
+  .result-grid .stat{animation:statPop .6s cubic-bezier(.22,1.4,.36,1) backwards;}
+  .result-grid .stat:nth-child(1){animation-delay:.05s;}
+  .result-grid .stat:nth-child(2){animation-delay:.2s;}
+  .result-grid .stat:nth-child(3){animation-delay:.35s;}
+  .result-grid .stat:nth-child(4){animation-delay:.5s;}
+  @keyframes statPop{
+    from{opacity:0;transform:perspective(800px) rotateX(70deg) translateZ(-40px);}
+    to{opacity:1;transform:perspective(800px) rotateX(0) translateZ(0);}
+  }
+
+  /* trophy spins in 3D above the result message */
+  #trophy3d{
+    text-align:center;font-size:52px;margin-top:6px;
+    animation:trophySpin 3.5s ease-in-out infinite;
+    display:none;
+  }
+  @keyframes trophySpin{
+    0%,100%{transform:perspective(700px) rotateY(0deg);}
+    50%{transform:perspective(700px) rotateY(360deg);}
+  }
+
+  /* header title gets a subtle 3D swing */
+  header h1{animation:swing3d 6s ease-in-out infinite;transform-style:preserve-3d;}
+  @keyframes swing3d{
+    0%,100%{transform:perspective(800px) rotateY(-8deg) rotateX(4deg);}
+    50%{transform:perspective(800px) rotateY(8deg) rotateX(-2deg);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<!-- 2D cartoon factory skyline -->
+<div class="skyline" aria-hidden="true">
+  <div class="layer far"></div>
+  <div class="layer near">
+    <svg width="100%" height="170" preserveAspectRatio="none" viewBox="0 0 1200 170">
+      <rect x="0" y="120" width="1200" height="50" fill="#7fd49a"/>
+      <!-- factory buildings -->
+      <g fill="#f97316" stroke="#c2410c" stroke-width="3">
+        <rect x="60" y="60" width="150" height="62"/>
+        <polygon points="60,60 85,42 110,60 135,42 160,60 185,42 210,60"/>
+      </g>
+      <g fill="#3b82f6" stroke="#17337f" stroke-width="3">
+        <rect x="300" y="50" width="180" height="72"/>
+        <rect x="330" y="20" width="26" height="34"/>
+        <rect x="380" y="12" width="26" height="42"/>
+        <rect x="430" y="24" width="26" height="30"/>
+      </g>
+      <g fill="#facc15" stroke="#ca8a04" stroke-width="3">
+        <rect x="560" y="70" width="120" height="52"/>
+        <rect x="575" y="30" width="18" height="44"/>
+      </g>
+      <g fill="#ef4444" stroke="#991b1b" stroke-width="3">
+        <rect x="740" y="58" width="160" height="64"/>
+        <polygon points="740,58 770,40 800,58 830,40 860,58 890,40 900,50 900,122 740,122"/>
+      </g>
+      <g fill="#22c55e" stroke="#15803d" stroke-width="3">
+        <rect x="960" y="64" width="150" height="58"/>
+        <rect x="1000" y="26" width="20" height="42"/>
+        <circle cx="1010" cy="22" r="7"/>
+      </g>
+      <!-- windows -->
+      <g fill="#fff" opacity=".85">
+        <rect x="75" y="75" width="20" height="20"/><rect x="105" y="75" width="20" height="20"/><rect x="135" y="75" width="20" height="20"/><rect x="165" y="75" width="20" height="20"/>
+        <rect x="315" y="65" width="22" height="22"/><rect x="345" y="65" width="22" height="22"/><rect x="405" y="65" width="22" height="22"/><rect x="435" y="65" width="22" height="22"/>
+        <rect x="575" y="82" width="18" height="18"/><rect x="605" y="82" width="18" height="18"/><rect x="635" y="82" width="18" height="18"/>
+        <rect x="755" y="72" width="20" height="20"/><rect x="785" y="72" width="20" height="20"/><rect x="815" y="72" width="20" height="20"/><rect x="845" y="72" width="20" height="20"/>
+        <rect x="975" y="78" width="20" height="20"/><rect x="1005" y="78" width="20" height="20"/><rect x="1035" y="78" width="20" height="20"/><rect x="1065" y="78" width="20" height="20"/>
+      </g>
+      <!-- cartoon gears -->
+      <text x="1180" y="150" font-size="30" opacity=".5">⚙️</text>
+      <text x="20" y="150" font-size="26" opacity=".5">🔧</text>
+    </svg>
+  </div>
+</div>
+<div class="cloud c1" aria-hidden="true"></div>
+<div class="cloud c2" aria-hidden="true"></div>
+<div class="gear3d g1" aria-hidden="true">⚙️</div>
+<div class="gear3d g2" aria-hidden="true">⚙️</div>
+<div id="coin3d" aria-hidden="true"><div class="face front">⭐</div><div class="face back">$</div></div>
+<button id="btn-sound" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+<div id="combo" aria-hidden="true">🔥 2 in a row!</div>
+
+<div class="wrap">
+
+  <header>
+    <div class="logo">🏭</div>
+    <div>
+      <h1>MES MISSION</h1>
+      <p>Manufacturing Execution System training for production operators — sample data only</p>
+    </div>
+  </header>
+
+  <!-- ============ 1. MISSION SCREEN ============ -->
+  <section class="card" id="section-mission">
+    <span id="mascot" aria-hidden="true">👷</span>
+    <h2>🎯 Mission Screen <span class="badge" id="mission-badge">Mission 1 of 3</span></h2>
+    <span class="mission-tag" id="mission-tag"></span>
+    <h3 id="mission-title"></h3>
+    <p id="mission-desc"></p>
+    <div class="answers" id="answers"></div>
+    <div id="feedback"></div>
+    <button id="btn-next">Next Question ➜</button>
+  </section>
+
+  <!-- ============ 2. PROGRESS PANEL ============ -->
+  <section class="card" id="section-progress">
+    <h2>📊 Progress Panel</h2>
+    <div class="stats">
+      <div class="stat"><div class="num" id="p-score">0</div><div class="lbl">Score</div></div>
+      <div class="stat"><div class="num orange" id="p-qnum">1 / 6</div><div class="lbl">Question</div></div>
+      <div class="stat"><div class="num" id="p-correct">0</div><div class="lbl">Correct</div></div>
+      <div class="stat"><div class="num" id="p-done">0 / 3</div><div class="lbl">Missions</div></div>
+    </div>
+    <div id="stars"></div>
+    <div class="bar-outer"><div id="bar"></div></div>
+    <div class="mission-list" id="mission-list"></div>
+  </section>
+
+  <!-- ============ 3. RESULT SCREEN ============ -->
+  <section class="card" id="section-result">
+    <h2>🏁 Result Screen</h2>
+    <div id="result-empty" style="color:var(--muted);font-size:14px;">
+      Finish all missions to see your final result here. Good luck, operator! 💪
+    </div>
+    <div id="result-full" style="display:none;">
+      <div id="trophy3d">🏆</div>
+      <div class="result-grid">
+        <div class="stat"><div class="num" id="r-score">0</div><div class="lbl">Total Score</div></div>
+        <div class="stat"><div class="num" id="r-correct" style="color:var(--good)">0</div><div class="lbl">Correct</div></div>
+        <div class="stat"><div class="num" id="r-wrong" style="color:var(--bad)">0</div><div class="lbl">Incorrect</div></div>
+        <div class="stat"><div class="num orange" id="r-missions">0</div><div class="lbl">Missions Done</div></div>
+      </div>
+      <div id="result-msg"></div>
+      <button id="btn-replay">🔁 Replay Training</button>
+    </div>
+  </section>
+
+  <footer>MES Mission · Training demo with fictional Malaysian factory scenarios · No data is saved</footer>
+</div>
+
+<script>
+// ---------------- SAMPLE DATA (fictional, Malaysia-specific) ----------------
+const MISSIONS = [
+  {
+    id: 1,
+    tag: "Mission 1 · Shah Alam Plant · Line A",
+    title: "Morning Shift Start-Up Scan",
+    desc: "You are an operator at the Shah Alam plant. Before starting the morning shift on Line A, you must scan your employee badge into the MES terminal at your workstation.",
+    questions: [
+      {
+        q: "Your MES terminal shows 'Badge not recognised'. What is the correct first action?",
+        answers: [
+          "Ask a co-worker to scan their badge so the line can start",
+          "Report to your supervisor and request a badge re-registration",
+          "Skip the scan and start working — record it later",
+          "Restart the terminal repeatedly until it accepts the badge"
+        ],
+        correct: 1,
+        explain: "In Malaysian factory SOP, only YOUR badge starts YOUR operation. A wrong badge creates a false labour record in MES. Always report to the supervisor for badge re-registration."
+      },
+      {
+        q: "The MES screen asks for the batch number before production starts. The material bin label reads 'B-2026-0417-SA'. What do you do?",
+        answers: [
+          "Type only 'B-2026' because it is faster",
+          "Leave it blank and let the supervisor fill it in",
+          "Scan or enter the full batch code exactly as printed",
+          "Guess the batch number from yesterday's record"
+        ],
+        correct: 2,
+        explain: "Batch traceability is a core MES rule. A partial or guessed batch number breaks the traceability chain and can trigger a full product recall. Always enter the complete code."
+      }
+    ]
+  },
+  {
+    id: 2,
+    tag: "Mission 2 · Penang Plant · SMT Line 2",
+    title: "Machine Downtime Alert",
+    desc: "You are a line leader in Penang. The SMT machine on Line 2 stops mid-run and the MES screen flashes a 'Machine Down' alarm with a downtime timer running.",
+    questions: [
+      {
+        q: "What should you enter in the MES downtime reason field?",
+        answers: [
+          "Select the accurate reason code, e.g. 'Feeder jam — station 3'",
+          "Choose 'Other' for everything to save time",
+          "Enter no reason so the timer resets",
+          "Write a story in the comments box instead of a code"
+        ],
+        correct: 0,
+        explain: "Downtime reason codes feed the plant's OEE report. Selecting 'Other' for real problems hides the true failure cause, so the maintenance team cannot prioritise repairs correctly."
+      },
+      {
+        q: "While fixing the feeder, MES asks who is performing the repair. Technician Muhammad Aiman's login is on another terminal. What is correct?",
+        answers: [
+          "Log in as yourself and record Aiman's name in free text",
+          "Perform the repair yourself so your login stays valid",
+          "Have Aiman log in at that terminal and confirm his own repair",
+          "Ask Aiman to share his MES password with you"
+        ],
+        correct: 2,
+        explain: "MES work records must match who actually did the job. Sharing passwords is an audit violation in every factory. Each technician confirms their own work under their own login."
+      }
+    ]
+  },
+  {
+    id: 3,
+    tag: "Mission 3 · Johor Plant · Packing Area",
+    title: "End-of-Shift Quality Check",
+    desc: "You are closing the shift at the Johor packing area. The MES shows 480 units completed, but you counted 474 good units and 6 rejected units on the reject bench.",
+    questions: [
+      {
+        q: "How do you reconcile the MES quantity before ending the shift?",
+        answers: [
+          "Accept 480 as shown because MES is always right",
+          "Reduce the good count to 474 and record 6 units as rejected",
+          "Remove 6 units from the reject bench so totals match",
+          "Adjust the numbers to 480 good so the report looks perfect"
+        ],
+        correct: 1,
+        explain: "Good and reject quantities must match physical reality. Falsifying counts to make reports look clean is a serious quality violation and hides real yield problems from the plant team."
+      },
+      {
+        q: "After ending the shift, you realise you forgot to log one downtime of 15 minutes. What now?",
+        answers: [
+          "Ignore it — the shift is already closed",
+          "Edit yesterday's data yourself through a shared account",
+          "Tell your supervisor so the record can be corrected properly",
+          "Add the 15 minutes to tomorrow's downtime instead"
+        ],
+        correct: 2,
+        explain: "Corrections must follow the proper change process with supervisor approval and an audit trail. Moving downtime between shifts distorts both shifts' performance records."
+      }
+    ]
+  }
+];
+
+const TOTAL_QUESTIONS = MISSIONS.reduce((s,m)=>s+m.questions.length,0);
+
+// ---------------- SOUND ENGINE (Web Audio, synthesized — no files) ----------------
+let soundOn = true;
+let actx = null;
+function audioCtx(){
+  if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if(actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur, type='square', vol=.15, delay=0){
+  if(!soundOn) return;
+  try{
+    const ctx = audioCtx();
+    const t0 = ctx.currentTime + delay;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t0); o.stop(t0 + dur);
+  }catch(e){/* audio not available */}
+}
+const sfx = {
+  correct(){ tone(523,.12,'square',.18); tone(659,.12,'square',.18,.09); tone(784,.2,'square',.18,.18); tone(1047,.3,'square',.15,.3); },
+  wrong(){ tone(196,.25,'sawtooth',.16); tone(147,.35,'sawtooth',.16,.18); },
+  click(){ tone(660,.06,'triangle',.12); },
+  hover(){ tone(880,.04,'triangle',.05); },
+  mission(){ [523,659,784,1047,1319].forEach((f,i)=>tone(f,.18,'square',.16,i*.12)); },
+  finish(){ [784,988,1175,1568].forEach((f,i)=>tone(f,.25,'square',.16,i*.15)); tone(1568,.6,'triangle',.14,.7); }
+};
+$('btn-sound').onclick = () => {
+  soundOn = !soundOn;
+  $('btn-sound').textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) sfx.click();
+};
+
+// hover sparkles + sound on answer buttons
+function sparkle(e){
+  const s=document.createElement('div');
+  s.className='sparkle';
+  s.textContent=Math.random()<.5?'✨':'⭐';
+  s.style.left=(e.clientX-6+Math.random()*12-6)+'px';
+  s.style.top=(e.clientY-10)+'px';
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(),650);
+}
+
+// combo streak display
+let streak = 0;
+function showCombo(n){
+  const c=$('combo');
+  if(n>=2){
+    c.textContent = '🔥 ' + n + ' in a row!' + (n>=4 ? ' Amazing!' : '');
+    c.classList.remove('show'); void c.offsetWidth;
+    c.classList.add('show');
+  }else{
+    c.classList.remove('show');
+  }
+}
+
+// ---------------- STATE ----------------
+let state, missionCorrect;
+function initState(){
+  state = {
+    mission: 0,
+    question: 0,
+    score: 0,
+    correct: 0,
+    wrong: 0,
+    answered: false,
+    missionStars: MISSIONS.map(()=>null)
+  };
+  missionCorrect = MISSIONS.map(()=>0);
+}
+
+// ---------------- DOM ----------------
+const $ = id => document.getElementById(id);
+const els = {
+  badge:$('mission-badge'), tag:$('mission-tag'), title:$('mission-title'),
+  desc:$('mission-desc'), answers:$('answers'), feedback:$('feedback'),
+  next:$('btn-next'), score:$('p-score'), qnum:$('p-qnum'),
+  pcorrect:$('p-correct'), pdone:$('p-done'), stars:$('stars'),
+  bar:$('bar'), list:$('mission-list'),
+  resultEmpty:$('result-empty'), resultFull:$('result-full'),
+  rScore:$('r-score'), rCorrect:$('r-correct'), rWrong:$('r-wrong'),
+  rMissions:$('r-missions'), rMsg:$('result-msg'), replay:$('btn-replay')
+};
+
+// 3 stars = all correct, 2 stars = one wrong, 1 star = more
+function starsFor(wrongCount){
+  return wrongCount===0 ? 3 : wrongCount===1 ? 2 : 1;
+}
+function starHTML(n){
+  let h='';
+  for(let i=1;i<=3;i++) h += `<span class="${i<=n?'on':''}">★</span>`;
+  return h;
+}
+function globalQIndex(){
+  let n=0;
+  for(let i=0;i<state.mission;i++) n+=MISSIONS[i].questions.length;
+  return n + state.question + 1;
+}
+
+// ---------------- RENDER ----------------
+function renderProgress(){
+  els.score.textContent = state.score;
+  const qShown = Math.min(globalQIndex(), TOTAL_QUESTIONS);
+  els.qnum.textContent = `${qShown} / ${TOTAL_QUESTIONS}`;
+  els.pcorrect.textContent = state.correct;
+  els.pdone.textContent = `${state.missionStars.filter(s=>s!==null).length} / ${MISSIONS.length}`;
+
+  const earned = state.missionStars.filter(s=>s!==null).reduce((a,b)=>a+b,0);
+  const possible = MISSIONS.length*3;
+  els.stars.innerHTML = `Mission Stars&nbsp; ${starHTML(earned)} <small>(${earned} / ${possible})</small>`;
+
+  const doneQ = globalQIndex() - (state.answered ? 0 : 1);
+  els.bar.style.width = Math.max(0, Math.min(100, doneQ*100/TOTAL_QUESTIONS)) + '%';
+
+  els.list.innerHTML = MISSIONS.map((mm,i)=>{
+    const st = state.missionStars[i];
+    const cls = st!==null ? 'done' : (i===state.mission ? 'active' : '');
+    const icon = st!==null ? '✅' : (i===state.mission ? '▶️' : '🔒');
+    return `<div class="mission-item ${cls}">
+      <span class="ms-icon">${icon}</span>
+      <span>Mission ${mm.id}: ${mm.title}</span>
+      <span class="ms-stars">${st!==null ? starHTML(st) : '★★★'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMission(){
+  if(state.mission >= MISSIONS.length){ renderResult(); return; }
+  const m = MISSIONS[state.mission];
+  const q = m.questions[state.question];
+  els.badge.textContent = `Mission ${m.id} of ${MISSIONS.length}`;
+  els.tag.textContent = m.tag;
+  els.title.textContent = m.title;
+  els.desc.innerHTML = `<strong>${q.q}</strong><br><span style="font-size:12px;">Question ${state.question+1} of ${m.questions.length} in this mission</span>`;
+  els.answers.innerHTML = '';
+  q.answers.forEach((a,i)=>{
+    const b=document.createElement('button');
+    b.className='answer';
+    b.dataset.key='ABCD'[i];
+    const span=document.createElement('span');
+    span.textContent=a;
+    b.appendChild(span);
+    b.onclick=()=>answer(i,b);
+    b.addEventListener('mouseenter',e=>{ sfx.hover(); sparkle(e); });
+    els.answers.appendChild(b);
+  });
+  els.feedback.className='';
+  els.feedback.textContent='';
+  els.next.className='';
+  state.answered=false;
+  flipCard();
+  renderProgress();
+}
+
+// FEATURE 1 + 2: immediate feedback, +100 points instantly
+function answer(i, btn){
+  if(state.answered) return;
+  state.answered=true;
+  const q = MISSIONS[state.mission].questions[state.question];
+  const buttons=[...els.answers.children];
+  buttons.forEach(b=>b.disabled=true);
+  const ok = i===q.correct;
+  const mascot=$('mascot');
+  if(ok){
+    btn.classList.add('correct');
+    state.score += 100;
+    state.correct++;
+    missionCorrect[state.mission]++;
+    streak++;
+    showCombo(streak);
+    sfx.correct();
+    floatPoints(btn);
+    flyCoin(btn);
+    confetti(14);
+    els.score.classList.remove('bump'); void els.score.offsetWidth;
+    els.score.classList.add('bump');
+    mascot.textContent='🥳';
+    mascot.classList.remove('sad'); mascot.classList.add('happy');
+    setTimeout(()=>{mascot.classList.remove('happy');mascot.textContent='👷';},1100);
+  }else{
+    btn.classList.add('wrong');
+    buttons[q.correct].classList.add('correct');
+    state.wrong++;
+    streak=0;
+    showCombo(0);
+    sfx.wrong();
+    mascot.textContent='😰';
+    mascot.classList.remove('happy'); mascot.classList.add('sad');
+    setTimeout(()=>{mascot.classList.remove('sad');mascot.textContent='👷';},700);
+  }
+  els.feedback.className = 'show ' + (ok?'good':'bad');
+  els.feedback.innerHTML = `${ok?'✅ <strong>Correct! +100 points</strong>':'❌ <strong>Incorrect.</strong>'} ${q.explain}`;
+  els.next.textContent = nextLabel();
+  els.next.className='show';
+  renderProgress();
+}
+
+// 2D game juice: floating +100 and confetti
+function floatPoints(anchor){
+  const r=anchor.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='float-pts';
+  el.textContent='+100';
+  el.style.left=(r.left+r.width/2-30)+'px';
+  el.style.top=(r.top-6)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+function confetti(n){
+  const colors=['#f97316','#22c55e','#3b82f6','#facc15','#ef4444'];
+  for(let k=0;k<n;k++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=(45+Math.random()*10)+'vw';
+    c.style.top=(30+Math.random()*15)+'vh';
+    c.style.background=colors[k%colors.length];
+    c.style.borderRadius=Math.random()<.5?'50%':'3px';
+    c.style.animationDelay=(Math.random()*.3)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),1800);
+  }
+}
+function nextLabel(){
+  const m=MISSIONS[state.mission];
+  if(state.question < m.questions.length-1) return 'Next Question ➜';
+  return state.mission === MISSIONS.length-1 ? 'Finish & See Results 🏁' : 'Complete Mission & Continue ➜';
+}
+
+// FEATURE 3: mark mission completed, star rating, move to next
+function next(){
+  if(!state.answered) return;
+  sfx.click();
+  const m=MISSIONS[state.mission];
+  if(state.question < m.questions.length-1){
+    state.question++;
+  }else{
+    state.missionStars[state.mission] = starsFor(m.questions.length - missionCorrect[state.mission]);
+    sfx.mission();
+    confetti(22);
+    state.mission++;
+    state.question=0;
+  }
+  renderMission();
+}
+
+function renderResult(){
+  els.badge.textContent = 'Training Complete';
+  els.tag.textContent = 'All missions finished';
+  els.title.textContent = '🏆 Training Complete!';
+  els.desc.textContent = 'You have finished every MES mission. Review your final result below.';
+  els.answers.innerHTML='';
+  els.feedback.className='';
+  els.next.className='';
+  els.resultEmpty.style.display='none';
+  els.resultFull.style.display='block';
+  $('trophy3d').style.display='block';
+  const pct = state.correct/TOTAL_QUESTIONS;
+  let msg;
+  if(pct===1)       msg = '🌟 Perfect score! You are ready to be an MES champion on the factory floor. Zero mistakes — your supervisor would be proud!';
+  else if(pct>=0.8) msg = '👍 Great work! You avoided most common MES mistakes. Review the questions you missed and you will be flawless next shift.';
+  else if(pct>=0.5) msg = '🙂 Not bad, operator! You know the basics, but some MES procedures need another look. Replay to strengthen your weak spots.';
+  else              msg = '📚 Keep learning! MES data accuracy is critical for traceability and audits. Replay the training and try again.';
+  els.rScore.textContent = state.score;
+  els.rCorrect.textContent = state.correct;
+  els.rWrong.textContent = state.wrong;
+  els.rMissions.textContent = `${state.missionStars.filter(s=>s!==null).length} / ${MISSIONS.length}`;
+  els.rMsg.textContent = msg;
+  sfx.finish();
+  if(state.correct/TOTAL_QUESTIONS >= 0.8) confetti(30);
+  renderProgress();
+}
+
+// 3D juice: coin flight to the score counter on correct answers
+function flyCoin(fromEl){
+  const coin=$('coin3d');
+  const from=fromEl.getBoundingClientRect();
+  const to=els.score.getBoundingClientRect();
+  coin.style.setProperty('--cx',(to.left+to.width/2-(from.left+from.width/2))+'px');
+  coin.style.setProperty('--cy',(to.top+to.height/2-(from.top+from.height/2))+'px');
+  coin.style.left=(from.left+from.width/2-22)+'px';
+  coin.style.top=(from.top+from.height/2-22)+'px';
+  coin.classList.remove('fly'); void coin.offsetWidth;
+  coin.classList.add('fly');
+  setTimeout(()=>coin.classList.remove('fly'),1050);
+}
+
+// 3D card flip-in when a new question appears
+function flipCard(){
+  const card=$('section-mission');
+  card.classList.remove('flip-in'); void card.offsetWidth;
+  card.classList.add('flip-in');
+  setTimeout(()=>card.classList.remove('flip-in'),650);
+}
+
+// 3D tilt: cards lean toward the mouse position
+function initTilt(){
+  const strength=6; // degrees
+  document.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      const dx=(e.clientX-r.left)/r.width-.5;
+      const dy=(e.clientY-r.top)/r.height-.5;
+      card.style.transform=`perspective(1200px) rotateY(${dx*strength}deg) rotateX(${-dy*strength}deg) translateZ(6px)`;
+    });
+    card.addEventListener('mouseleave',()=>{
+      card.style.transform='';
+    });
+  });
+}
+
+els.next.addEventListener('click', next);
+els.replay.addEventListener('click',()=>{
+  sfx.click();
+  streak = 0;
+  showCombo(0);
+  initState();
+  $('trophy3d').style.display='none';
+  els.resultEmpty.style.display='block';
+  els.resultFull.style.display='none';
+  renderMission();
+});
+
+// ---------------- BOOT: app is never empty ----------------
+initState();
+renderMission();
+initTilt();
+</script>
+</body>
+</html>
